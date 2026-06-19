@@ -14,11 +14,20 @@ import { runWithContext } from './utils/requestContext.js';
 const app = express();
 
 // Security & parsing
-app.use(helmet());
+// CORP relaxed so the admin frontend (different subdomain) can fetch API
+// resources (e.g. PDF blobs) without being blocked by the browser.
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+const allowedOrigins =
+  (process.env.CLIENT_ORIGIN || '*') === '*'
+    ? true
+    : process.env.CLIENT_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean);
 app.use(
   cors({
-    origin: (process.env.CLIENT_ORIGIN || '*') === '*' ? true : process.env.CLIENT_ORIGIN.split(','),
+    origin: allowedOrigins,
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Branch-Id'],
+    exposedHeaders: ['Content-Disposition'],
   })
 );
 app.use(express.json({ limit: '5mb' }));

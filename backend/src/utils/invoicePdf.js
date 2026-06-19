@@ -236,16 +236,24 @@ export const streamInvoicePdf = async (invoice, stream, settings = {}) => {
   const rEnd = drawTerms(termList.slice(half), M + colW + 24, half);
   y = Math.max(lEnd, rEnd) + 18;
 
-  /* Signature */
-  if (y > doc.page.height - 130) { doc.addPage(); y = M; }
+  /* Bottom block — signature sits directly above the footer, both anchored to
+   * the page bottom. Only break to a new page if the terms actually reach the
+   * reserved bottom zone (so the footer/QR never spills onto an empty page). */
+  const FOOTER_H = 70;
+  const SIG_H = 72;
+  const reservedTop = doc.page.height - FOOTER_H - SIG_H - 10;
+  if (y > reservedTop) { doc.addPage(); }
+
+  const fy = doc.page.height - FOOTER_H;
+  const sigY = fy - SIG_H;
+
   const bx = M + colW + 24;
-  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.red).text(`FOR ${co.name.toUpperCase()}`, bx, y);
-  doc.moveTo(bx, y + 44).lineTo(bx + colW, y + 44).strokeColor(C.ink).lineWidth(0.8).stroke();
-  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.ink).text(co.name, bx, y + 48, { width: colW, align: 'center' });
-  doc.font('Helvetica').fontSize(8).fillColor(C.sub).text('Authorized Signatory', bx, y + 60, { width: colW, align: 'center' });
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.red).text(`FOR ${co.name.toUpperCase()}`, bx, sigY);
+  doc.moveTo(bx, sigY + 40).lineTo(bx + colW, sigY + 40).strokeColor(C.ink).lineWidth(0.8).stroke();
+  doc.font('Helvetica-Bold').fontSize(9).fillColor(C.ink).text(co.name, bx, sigY + 44, { width: colW, align: 'center' });
+  doc.font('Helvetica').fontSize(8).fillColor(C.sub).text('Authorized Signatory', bx, sigY + 56, { width: colW, align: 'center' });
 
   /* Footer + QR */
-  const fy = doc.page.height - 70;
   doc.moveTo(M, fy - 8).lineTo(right, fy - 8).strokeColor(C.line).lineWidth(0.5).stroke();
   doc.font('Helvetica-Bold').fontSize(9).fillColor(C.ink).text(co.name, M, fy);
   doc.font('Helvetica').fontSize(8).fillColor(C.sub).text(co.tagline, M, fy + 12);

@@ -238,19 +238,22 @@ export const streamQuotePdf = async (quote, stream, settings = {}) => {
   const rightEnd = drawTerms(termList.slice(half), M + colW + 24, half);
   y = Math.max(leftEnd, rightEnd) + 18;
 
-  /* ---------------- Signatures ---------------- */
-  if (y > doc.page.height - 150) { doc.addPage(); y = M; }
-  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.red).text('CUSTOMER ACCEPTANCE', M, y);
-  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.red).text(`FOR ${co.name.toUpperCase()}`, bx, y);
-  const sy = y + 40;
-  doc.roundedRect(M, y + 14, colW, 34, 3).strokeColor(C.line).dash(2, { space: 2 }).stroke().undash();
-  doc.font('Helvetica-Oblique').fontSize(8).fillColor(C.faint).text('SIGN HERE', M, y + 27, { width: colW, align: 'center' });
+  /* ---------------- Signatures + footer (anchored together at page bottom) ---- */
+  const FOOTER_H = 70;
+  const SIG_H = 80;
+  if (y > doc.page.height - FOOTER_H - SIG_H - 10) { doc.addPage(); }
+  const fy = doc.page.height - FOOTER_H;
+  const sigY = fy - SIG_H;
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.red).text('CUSTOMER ACCEPTANCE', M, sigY);
+  doc.font('Helvetica-Bold').fontSize(8).fillColor(C.red).text(`FOR ${co.name.toUpperCase()}`, bx, sigY);
+  const sy = sigY + 40;
+  doc.roundedRect(M, sigY + 14, colW, 34, 3).strokeColor(C.line).dash(2, { space: 2 }).stroke().undash();
+  doc.font('Helvetica-Oblique').fontSize(8).fillColor(C.faint).text('SIGN HERE', M, sigY + 27, { width: colW, align: 'center' });
   doc.moveTo(bx, sy + 10).lineTo(bx + colW, sy + 10).strokeColor(C.ink).lineWidth(0.8).stroke();
   doc.font('Helvetica-Bold').fontSize(9).fillColor(C.ink).text(co.name, bx, sy + 14, { width: colW, align: 'center' });
   doc.font('Helvetica').fontSize(8).fillColor(C.sub).text('Authorized Signatory', bx, sy + 26, { width: colW, align: 'center' });
 
   /* ---------------- Footer band + QR ---------------- */
-  const fy = doc.page.height - 70;
   doc.moveTo(M, fy - 8).lineTo(right, fy - 8).strokeColor(C.line).lineWidth(0.5).stroke();
   doc.font('Helvetica-Bold').fontSize(9).fillColor(C.ink).text(co.name, M, fy);
   doc.font('Helvetica').fontSize(8).fillColor(C.sub).text(co.tagline, M, fy + 12);
