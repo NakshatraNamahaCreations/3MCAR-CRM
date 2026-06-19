@@ -173,8 +173,8 @@ export default function Salary() {
     try {
       const payload = {
         employeeId: genForm.employeeId,
-        month: genForm.month === '' ? undefined : Number(genForm.month),
-        year: genForm.year === '' ? undefined : Number(genForm.year),
+        salaryMonth: genForm.month === '' ? undefined : Number(genForm.month),
+        salaryYear: genForm.year === '' ? undefined : Number(genForm.year),
         bonus: genForm.bonus === '' ? undefined : Number(genForm.bonus),
       };
       await salaryApi.generate(payload);
