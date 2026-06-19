@@ -177,14 +177,19 @@ export const streamInvoicePdf = async (invoice, stream, settings = {}) => {
     y += 18;
   });
 
-  /* Totals */
-  doc.moveTo(cols.qty, y).lineTo(right, y).strokeColor(C.line).lineWidth(0.5).stroke();
+  /* Totals — right-aligned block; values share the line-items' right edge. */
+  const TOT_X = right - 300;        // left edge of the totals block
+  const LABEL_W = 150;              // label column (right-aligned, 10px gap to value)
+  const VAL_X = right - 150;        // value column left
+  const VAL_W = 150;                // value column (right-aligned ends at `right`)
+  doc.moveTo(TOT_X, y).lineTo(right, y).strokeColor(C.line).lineWidth(0.5).stroke();
   y += 8;
   const totRow = (label, value, opts = {}) => {
-    doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(opts.big ? 11 : 9).fillColor(opts.color || C.sub);
-    doc.text(label, cols.qty - 20, y, { width: 110 });
-    doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fillColor(opts.color || C.ink);
-    doc.text(rs(value), cols.rate - 50, y, { width: 110, align: 'right' });
+    const size = opts.big ? 11 : 9;
+    doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(size).fillColor(opts.color || C.sub);
+    doc.text(label, TOT_X, y, { width: LABEL_W, align: 'right' });
+    doc.font(opts.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(size).fillColor(opts.color || C.ink);
+    doc.text(rs(value), VAL_X, y, { width: VAL_W, align: 'right' });
     y += opts.big ? 19 : 14;
   };
   totRow('Subtotal', invoice.subtotal);
@@ -196,7 +201,7 @@ export const streamInvoicePdf = async (invoice, stream, settings = {}) => {
     if (invoice.igstAmount > 0) totRow('IGST', invoice.igstAmount);
     else { totRow('CGST', invoice.cgstAmount); totRow('SGST', invoice.sgstAmount); }
   }
-  doc.moveTo(cols.qty - 20, y).lineTo(right, y).strokeColor(C.ink).lineWidth(1).stroke();
+  doc.moveTo(TOT_X, y).lineTo(right, y).strokeColor(C.ink).lineWidth(1).stroke();
   y += 6;
   totRow('Grand Total', grand, { bold: true, big: true, color: C.red });
   if (invoice.paidAmount > 0 || invoice.paymentStatus !== 'unpaid') {
@@ -204,9 +209,9 @@ export const streamInvoicePdf = async (invoice, stream, settings = {}) => {
     totRow('Balance Due', balance, { bold: true, color: balance > 0 ? C.red : '#15803d' });
   }
 
-  // Amount in words (left, aligned under table start)
+  // Amount in words (left half — kept clear of the totals block on the right)
   const wordsY = y - (invoice.paidAmount > 0 ? 95 : 60);
-  doc.font('Helvetica-Oblique').fontSize(9).fillColor(C.sub).text(numberToWords(grand), M, Math.max(wordsY, y - 80), { width: cols.qty - M - 20 });
+  doc.font('Helvetica-Oblique').fontSize(9).fillColor(C.sub).text(numberToWords(grand), M, Math.max(wordsY, y - 80), { width: right - 310 - M });
   y += 18;
 
   const colW = (contentW - 24) / 2;
